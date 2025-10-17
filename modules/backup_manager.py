@@ -7,12 +7,14 @@ from datetime import datetime
 from colorama import Fore, Style, init
 import requests
 from tqdm import tqdm
+from modules.upload import UploadManager
 
 init(autoreset=True)
 
 class BackupManager:
     def __init__(self):
         self.backup_path = None
+        self.upload_manager = UploadManager()
 
     def show_banner(self):
         banner = f"""
@@ -37,7 +39,7 @@ class BackupManager:
             elif choice == "2":
                 self.advanced_backup()
             elif choice == "3":
-                self.upload_to_0x0()
+                self.upload_files()
             elif choice == "4":
                 self.backup_status()
             elif choice == "5":
@@ -65,7 +67,7 @@ class BackupManager:
         print(f"{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
         print(f"{Fore.GREEN}1. Quick Backup")
         print(f"{Fore.BLUE}2. Advanced Backup")
-        print(f"{Fore.YELLOW}3. Upload to 0x0.st")
+        print(f"{Fore.YELLOW}3. Upload Files")
         print(f"{Fore.CYAN}4. Backup Status")
         print(f"{Fore.RED}5. Exit{Style.RESET_ALL}")
         print(f"{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
@@ -118,7 +120,6 @@ class BackupManager:
         all_files_in_backup = set()
         created_files = []
         
-        # Known file types
         for category, extensions in file_types.items():
             files = self.get_files_by_extensions(extensions)
             if files:
@@ -128,7 +129,6 @@ class BackupManager:
                     created_files.append(filename)
                     all_files_in_backup.update(files)
         
-        # Unknown file types
         all_files = set()
         for root, dirs, files in os.walk(self.backup_path):
             for file in files:
@@ -149,14 +149,12 @@ class BackupManager:
     def ask_backup_options(self, filename):
         print(f"\n{Fore.YELLOW}Backup Options for {filename}{Style.RESET_ALL}")
         
-        # Password protection
         password_option = input(f"{Fore.YELLOW}Add password protection? (y/n): {Style.RESET_ALL}").lower()
         if password_option == 'y':
             pwd = getpass.getpass(f"{Fore.YELLOW}Enter password: {Style.RESET_ALL}")
             if self.add_password_to_zip(filename, pwd):
                 print(f"{Fore.GREEN}Password added successfully{Style.RESET_ALL}")
         
-        # Anonymous name
         anon_option = input(f"{Fore.YELLOW}Use anonymous name? (y/n): {Style.RESET_ALL}").lower()
         if anon_option == 'y':
             new_name = self.generate_anonymous_name()
@@ -164,15 +162,13 @@ class BackupManager:
             filename = new_name
             print(f"{Fore.GREEN}Renamed to: {filename}{Style.RESET_ALL}")
         
-        # Upload to 0x0
-        upload_option = input(f"{Fore.YELLOW}Upload to 0x0.st? (y/n): {Style.RESET_ALL}").lower()
+        upload_option = input(f"{Fore.YELLOW}Upload file? (y/n): {Style.RESET_ALL}").lower()
         if upload_option == 'y':
             self.upload_single_file(filename)
 
     def ask_backup_options_multiple(self, filenames):
         print(f"\n{Fore.YELLOW}Backup Options for {len(filenames)} files{Style.RESET_ALL}")
         
-        # Password protection for all
         password_option = input(f"{Fore.YELLOW}Add password protection to all? (y/n): {Style.RESET_ALL}").lower()
         if password_option == 'y':
             pwd = getpass.getpass(f"{Fore.YELLOW}Enter password for all: {Style.RESET_ALL}")
@@ -180,7 +176,6 @@ class BackupManager:
                 if self.add_password_to_zip(filename, pwd):
                     print(f"{Fore.GREEN}Password added to {filename}{Style.RESET_ALL}")
         
-        # Anonymous names for all
         anon_option = input(f"{Fore.YELLOW}Use anonymous names for all? (y/n): {Style.RESET_ALL}").lower()
         if anon_option == 'y':
             new_filenames = []
@@ -191,8 +186,7 @@ class BackupManager:
                 print(f"{Fore.GREEN}Renamed {filename} to {new_name}{Style.RESET_ALL}")
             filenames = new_filenames
         
-        # Upload all to 0x0
-        upload_option = input(f"{Fore.YELLOW}Upload all to 0x0.st? (y/n): {Style.RESET_ALL}").lower()
+        upload_option = input(f"{Fore.YELLOW}Upload all files? (y/n): {Style.RESET_ALL}").lower()
         if upload_option == 'y':
             self.upload_multiple_files(filenames)
 
@@ -241,7 +235,6 @@ class BackupManager:
 
     def add_password_to_zip(self, zip_name, password):
         try:
-            # Create temporary zip with password
             temp_name = f"temp_{zip_name}"
             with zipfile.ZipFile(zip_name, 'r') as zip_read:
                 with zipfile.ZipFile(temp_name, 'w', zipfile.ZIP_DEFLATED) as zip_write:
@@ -271,25 +264,13 @@ class BackupManager:
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=12)) + ".zip"
 
     def upload_single_file(self, filename):
-        print(f"{Fore.YELLOW}Uploading {filename} to 0x0.st...{Style.RESET_ALL}")
-        try:
-            with open(filename, 'rb') as f:
-                response = requests.post('https://0x0.st', files={'file': f})
-                if response.status_code == 200:
-                    print(f"{Fore.GREEN}Upload successful: {response.text.strip()}{Style.RESET_ALL}")
-                    return response.text.strip()
-                else:
-                    print(f"{Fore.RED}Upload failed! Status: {response.status_code}{Style.RESET_ALL}")
-        except Exception as e:
-            print(f"{Fore.RED}Upload error: {e}{Style.RESET_ALL}")
+        return self.upload_manager.upload_file(filename)
 
     def upload_multiple_files(self, filenames):
-        print(f"{Fore.YELLOW}Uploading {len(filenames)} files to 0x0.st...{Style.RESET_ALL}")
-        for filename in filenames:
-            self.upload_single_file(filename)
+        return self.upload_manager.upload_multiple_files(filenames)
 
-    def upload_to_0x0(self):
-        print(f"\n{Fore.MAGENTA}Upload to 0x0.st{Style.RESET_ALL}")
+    def upload_files(self):
+        print(f"\n{Fore.MAGENTA}Upload Files{Style.RESET_ALL}")
         zip_files = [f for f in os.listdir('.') if f.endswith('.zip')]
         
         if not zip_files:
