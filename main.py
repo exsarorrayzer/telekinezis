@@ -7,10 +7,10 @@ def show_banner():
     banner = f"""
     {Fore.CYAN}╔══════════════════════════════════════════════╗
     ║            {Fore.YELLOW}TELEKINEZIS BACKUP SYSTEM{Fore.CYAN}         ║
-    ║           {Fore.GREEN}${Fore.CYAN}                                 ║
-    ║                                             ║
-    ║              {Fore.YELLOW}Author: exsarorrayzer{Fore.CYAN}          ║
-    ║                 {Fore.YELLOW}Version: 2.1{Fore.CYAN}                ║
+    ║                     {Fore.GREEN}${Fore.CYAN}                       ║
+     ║                                              ║
+     ║              {Fore.YELLOW}Author: exsarorrayzer{Fore.CYAN}          ║
+     ║                 {Fore.YELLOW} Version: 2.1{Fore.CYAN}                ║
     ╚══════════════════════════════════════════════╝{Style.RESET_ALL}
     """
     print(banner)
