@@ -53,7 +53,6 @@ class BackupManager:
         change = input(f"{Fore.YELLOW}Change backup path? (y/n): {Style.RESET_ALL}").lower()
         if change == 'y':
             new_path = input(f"{Fore.YELLOW}Enter path: {Style.RESET_ALL}")
-            # Girişi temizle ve genişlet (~ işaretini home dizinine çevir)
             new_path = os.path.expanduser(new_path.strip())
             
             if os.path.exists(new_path):
