@@ -53,13 +53,17 @@ class BackupManager:
         change = input(f"{Fore.YELLOW}Change backup path? (y/n): {Style.RESET_ALL}").lower()
         if change == 'y':
             new_path = input(f"{Fore.YELLOW}Enter path: {Style.RESET_ALL}")
+            # Girişi temizle ve genişlet (~ işaretini home dizinine çevir)
+            new_path = os.path.expanduser(new_path.strip())
+            
             if os.path.exists(new_path):
-                os.chdir(new_path)
-                print(f"{Fore.GREEN}Path changed to: {os.getcwd()}{Style.RESET_ALL}")
+                self.backup_path = new_path
+                print(f"{Fore.GREEN}Backup path set to: {self.backup_path}{Style.RESET_ALL}")
             else:
                 print(f"{Fore.RED}Path not found! Using current directory.{Style.RESET_ALL}")
-        
-        self.backup_path = os.getcwd()
+                self.backup_path = os.getcwd()
+        else:
+            self.backup_path = os.getcwd()
 
     def show_menu(self):
         print(f"\n{Fore.CYAN}{'='*50}")
